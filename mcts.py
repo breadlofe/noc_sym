@@ -5,9 +5,14 @@ import math
 import numpy as np
 import noc_sym as ns
 import copy
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 def ucb_score(parent, child):
+    '''
+    Score function of the MCTS used by best child selection.
+    Look at the visit counts of the parent and child, multiplied
+    by some constant C (C = 2 here, for some incentivized exploration).
+    '''
     prior_score = 2 * math.sqrt( math.log(parent.visit_count) ) / ( child.visit_count + 1 )
     if child.visit_count > 0:
         value_score = child.value()
@@ -23,14 +28,23 @@ class Node:
         self.state = state
 
     def expanded(self):
+        '''
+        If the node has children/has been expanded.
+        '''
         return len(self.children) > 0
     
     def value(self):
+        '''
+        The cumulative average value of the node in the tree.
+        '''
         if self.visit_count == 0:
             return 0
         return self.value_sum / self.visit_count
     
     def best_child(self):
+        '''
+        Select best child best on UCB score of that child.
+        '''
         best_score = -np.inf
         best_child = None
 
@@ -50,8 +64,10 @@ class Node:
         return new_node
     
     def expand(self):
-        # Get all the combinations of possible (and legal) board configurations 
-        # from the given state. Add these to the children of this node.
+        '''
+        Get all the combinations of possible (and legal) board configurations 
+        from the given state. Add these to the children of this node.
+        '''
         valid_moves = self.state.get_valid_moves()
         for empty_slots in valid_moves[0]:
             for unplaced_nodes in valid_moves[1]:
@@ -68,6 +84,10 @@ class MCTS:
         self.simulations = simulations
 
     def rollout(self, node:Node):
+        '''
+        Rollut functionality of MCTS: take random actions until you hit
+        a terminal state. Then, return the value of that terminal state.
+        '''
         # ROLLOUT PHASE
         if not node.state.is_terminal():
             while not node.state.is_terminal():
@@ -81,6 +101,10 @@ class MCTS:
         return value
 
     def run(self):
+        '''
+        The MCTS algorithm. Run simulations and return back optimal terminal states
+        and their values.
+        '''
         # env is NoC, state is the board, action is placing node onto board
         self.env = ns.NoC(self.env_params[0], self.env_params[1].copy(), self.env_params[2])
         state = self.env.copy()
@@ -92,7 +116,7 @@ class MCTS:
             search_path = [current]
 
             # helper
-            if _ % 82 == 0 and _ != 0:
+            if _ % 200 == 0 and _ != 0:
                 print(f"{_} simulations ran...")
 
             # is current a leaf node? IF IT IS EXPANDED, THEN IT IS NOT A LEAF NODE !!!!
@@ -130,49 +154,27 @@ class MCTS:
             node.visit_count += 1
 
 
-conns = {'A':['C','G'],'B':['C','D'],'C':['F'],'D':['C'],'E':['C','D'],'F':['A','H'],'G':['E','I'],'H':['I'],'I':['H']}
-nodes = ['A','B','C','D','E','F','G','H','I']
+# conns = {'A':['C','G'],'B':['C','D'],'C':['F'],'D':['C'],'E':['C','D'],'F':['A','H'],'G':['E','I'],'H':['I'],'I':['H']}
+# nodes = ['A','B','C','D','E','F','G','H','I']
 
-noc = ns.NoC(3,nodes.copy(),conns)
+# noc = ns.NoC(3,nodes.copy(),conns)
 
-pray = MCTS(noc,[3,nodes.copy(),conns],500000)
-please = pray.run()
-
-
-mini = please[1].index(min(please[1]))
-best_state = please[0][mini]
-print(";;;;;;;;;")
-print(max(please[1]))
-print(min(please[1]))
-
-print(" ======= RESULT ========")
-best_state.state.print_noc()
-print(best_state.state.run_sim())
-
-plt.title( f"Average reward over {len(please[1])} terminals hit" )
-plt.plot(np.arange(len(please[1])), please[1])
-plt.xlabel("Number of t hits")
-plt.ylabel("Average reward percentage")
-plt.show()
+# pray = MCTS(noc,[3,nodes.copy(),conns],500000)
+# please = pray.run()
 
 
-"""
- ======= BEST RESULT UCB C = 2, -(hc**2) - lu ========
-['B', 'D', 'E']
-['A', 'C', 'G']
-['F', 'H', 'I']
-(1.2857142857142858, 3.0)
+# mini = please[1].index(min(please[1]))
+# best_state = please[0][mini]
+# print(";;;;;;;;;")
+# print(max(please[1]))
+# print(min(please[1]))
 
-===== BEST RESULT WITH UCB C = 2, -2*hc - lu =====
-['G', 'D', 'B']
-['F', 'E', 'C']
-['A', 'I', 'H']
-(1.7142857142857142, 4.0)
+# print(" ======= RESULT ========")
+# best_state.state.print_noc()
+# print(best_state.state.run_sim())
 
-COMPARED TO RANDOM
-
-['A', 'B', 'C']
-['D', 'E', 'F']
-['G', 'H', 'I']
-(1.7857142857142858, 4.166666666666667)
-"""
+# plt.title( f"Average reward over {len(please[1])} terminals hit" )
+# plt.plot(np.arange(len(please[1])), please[1])
+# plt.xlabel("Number of t hits")
+# plt.ylabel("Average reward percentage")
+# plt.show()

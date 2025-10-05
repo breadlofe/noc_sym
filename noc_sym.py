@@ -11,6 +11,9 @@ class Wire:
     used: int
 
 def wire_search(wires:dict, src:str, thing:str):
+    '''
+    Helper function for finding given destination node in wire dictionary
+    '''
     the_list = wires[src]
     idx = 0
     for dest in the_list:
@@ -79,6 +82,10 @@ class NoC:
     
 
     def routing_algo(self, links:dict):
+        '''
+        Simple cartesian distance algorithm. If node is to the left and above, move left until
+        directly below, and the move up until there.
+        '''
         for src in self.dests:
             src_pos_x, src_pos_y = self.board.index(src)%self.size, int(self.board.index(src)/self.size)
             for dest in self.dests[src]:
@@ -101,7 +108,7 @@ class NoC:
         return links
     
 
-    def get_throughput(self):
+    def get_load_balance(self):
         links = self.wire()
         links = self.routing_algo(links)
         # for key in links, for path in links, add .used up to total and divide by size*size
@@ -136,8 +143,8 @@ class NoC:
     def run_sim(self):
         #self.print_noc()
         hc = self.get_hop_count()
-        tp = self.get_throughput()
-        return (hc,tp)
+        lb = self.get_load_balance()
+        return (hc,lb)
     
     def copy(self):
         new = NoC(self.size, self.unplaced.copy(), self.dests)
@@ -145,6 +152,9 @@ class NoC:
         return new
     
     def reward(self):
+        '''
+        Helps with MCTS function.
+        '''
         results = self.run_sim()
         return -(results[0]**2) - results[1]
 
