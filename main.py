@@ -1,8 +1,9 @@
 import mcts
 import multiprocessing as mp
+import random
 
-def mp_helper(mcts:mcts.MCTS, shared_list:list):
-    result = mcts.run()
+def mp_helper(mcts:mcts.MCTS, shared_list:list, C:float):
+    result = mcts.run(C)
     mini = result[1].index(min(result[1]))
     best_state = result[0][mini]
     shared_list.append(best_state)
@@ -25,8 +26,8 @@ if __name__ == "__main__":
 
         for i in range(num_cores):
             noc = mcts.ns.NoC(3,nodes.copy(),conns)
-            tree = mcts.MCTS(noc,[3,nodes.copy(),conns],500000)
-            processes.append( mp.Process( target=mp_helper, args=(tree,best) ) )
+            tree = mcts.MCTS(noc,[3,nodes.copy(),conns],50000)
+            processes.append( mp.Process( target=mp_helper, args=(tree,best,random.uniform(0.5,3.5)) ) )
 
         for p in processes:
             p.start()

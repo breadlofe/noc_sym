@@ -7,13 +7,13 @@ import noc_sym as ns
 import copy
 #import matplotlib.pyplot as plt
 
-def ucb_score(parent, child):
+def ucb_score(parent, child, C):
     '''
     Score function of the MCTS used by best child selection.
     Look at the visit counts of the parent and child, multiplied
     by some constant C (C = 2 here, for some incentivized exploration).
     '''
-    prior_score = 2 * math.sqrt( math.log(parent.visit_count) ) / ( child.visit_count + 1 )
+    prior_score = C * math.sqrt( math.log(parent.visit_count) ) / ( child.visit_count + 1 )
     if child.visit_count > 0:
         value_score = child.value()
     else:
@@ -41,7 +41,7 @@ class Node:
             return 0
         return self.value_sum / self.visit_count
     
-    def best_child(self):
+    def best_child(self, C):
         '''
         Select best child best on UCB score of that child.
         '''
@@ -49,7 +49,7 @@ class Node:
         best_child = None
 
         for child in self.children:
-            score = ucb_score(self, child)
+            score = ucb_score(self, child, C)
             if score > best_score:
                 best_score = score
                 best_child = child
@@ -100,7 +100,7 @@ class MCTS:
             value = node.state.reward()
         return value
 
-    def run(self):
+    def run(self, C=2.0):
         '''
         The MCTS algorithm. Run simulations and return back optimal terminal states
         and their values.
@@ -121,7 +121,7 @@ class MCTS:
 
             # is current a leaf node? IF IT IS EXPANDED, THEN IT IS NOT A LEAF NODE !!!!
             while current.expanded(): # NO!
-                current = current.best_child()
+                current = current.best_child(C)
                 search_path.append(current)
             # YES!
             # is the visits for the current node 0?
@@ -159,7 +159,7 @@ class MCTS:
 
 # noc = ns.NoC(3,nodes.copy(),conns)
 
-# pray = MCTS(noc,[3,nodes.copy(),conns],500000)
+# pray = MCTS(noc,[3,nodes.copy(),conns],5000)
 # please = pray.run()
 
 
