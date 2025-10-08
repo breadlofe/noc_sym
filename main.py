@@ -1,25 +1,56 @@
 import mcts
+import multiprocessing as mp
 
-# Given network
-conns = {'A':['C','G'],'B':['C','D'],'C':['F'],'D':['C'],'E':['C','D'],'F':['A','H'],'G':['E','I'],'H':['I'],'I':['H']}
-nodes = ['A','B','C','D','E','F','G','H','I']
-
-# Example
-noc = mcts.ns.NoC(3,nodes.copy(),conns)
-
-pray = mcts.MCTS(noc,[3,nodes.copy(),conns],5000)
-please = pray.run()
+def mp_helper(mcts:mcts.MCTS, shared_list:list):
+    result = mcts.run()
+    mini = result[1].index(min(result[1]))
+    best_state = result[0][mini]
+    shared_list.append(best_state)
 
 
-mini = please[1].index(min(please[1]))
-best_state = please[0][mini]
-#print(";;;;;;;;;")
-#print(max(please[1]))
-#print(min(please[1]))
+if __name__ == "__main__":
 
-print(" ======= RESULT ========")
-best_state.state.print_noc()
-print(best_state.state.run_sim())
+    # mp setup
+    num_cores = mp.cpu_count()
+    print(f"Number of CPU cores: {num_cores}")
+    processes = []
+
+    # Given network
+    conns = {'A':['C','G'],'B':['C','D'],'C':['F'],'D':['C'],'E':['C','D'],'F':['A','H'],'G':['E','I'],'H':['I'],'I':['H']}
+    nodes = ['A','B','C','D','E','F','G','H','I']
+
+    with mp.Manager() as manager:
+
+        best = manager.list([])
+
+        for i in range(num_cores):
+            noc = mcts.ns.NoC(3,nodes.copy(),conns)
+            tree = mcts.MCTS(noc,[3,nodes.copy(),conns],500000)
+            processes.append( mp.Process( target=mp_helper, args=(tree,best) ) )
+
+        for p in processes:
+            p.start()
+
+        for p in processes:
+            p.join()
+
+        best_of_best = None
+        for b in best:
+            min = 1000
+            test = b.state.run_sim()
+            if test[0] + test[1] < min:
+                min = test
+                best_of_best = b
+
+        best_of_best.state.print_noc()
+        print(best_of_best.state.run_sim())
+
+    # best_state.state.print_noc()
+# print(best_state.state.run_sim())
+
+    
+
+
 
 """
  ======= BEST RESULT UCB C = 2, -(hc**2) - lu ========
