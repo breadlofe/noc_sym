@@ -154,24 +154,24 @@ class MCTS:
             node.visit_count += 1
 
 
-# conns = {'A':['C','G'],'B':['C','D'],'C':['F'],'D':['C'],'E':['C','D'],'F':['A','H'],'G':['E','I'],'H':['I'],'I':['H']}
-# nodes = ['A','B','C','D','E','F','G','H','I']
+conns = {'A':['C','G'],'B':['C','D'],'C':['F'],'D':['C'],'E':['C','D'],'F':['A','H'],'G':['E','I'],'H':['I'],'I':['H']}
+nodes = ['A','B','C','D','E','F','G','H','I']
 
-# noc = ns.NoC(3,nodes.copy(),conns)
+noc = ns.NoC(3,nodes.copy(),conns)
 
-# pray = MCTS(noc,[3,nodes.copy(),conns],5000)
-# please = pray.run()
+pray = MCTS(noc,[3,nodes.copy(),conns],5000)
+please = pray.run()
 
 
-# mini = please[1].index(min(please[1]))
-# best_state = please[0][mini]
-# print(";;;;;;;;;")
-# print(max(please[1]))
-# print(min(please[1]))
+mini = please[1].index(min(please[1]))
+best_state = please[0][mini]
+print(";;;;;;;;;")
+print(max(please[1]))
+print(min(please[1]))
 
-# print(" ======= RESULT ========")
-# best_state.state.print_noc()
-# print(best_state.state.run_sim())
+print(" ======= RESULT ========")
+best_state.state.print_noc()
+print(best_state.state.run_sim())
 
 # plt.title( f"Average reward over {len(please[1])} terminals hit" )
 # plt.plot(np.arange(len(please[1])), please[1])
