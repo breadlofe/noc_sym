@@ -38,7 +38,7 @@ class Routerless_NoC:
         self.board = place_nodes_on_board(size)
         self.n_con = n_con #neuron connection that guide what node connects to what in NoC (what packets are sent where)
         self.imrs = []
-        self.imr_paths = []
+        self.imr_paths = [] #this is the state
 
     def wire_imr(self, dim:list, dir:int):
         '''
@@ -64,7 +64,7 @@ class Routerless_NoC:
         self.imrs.append(new_imr)
     
 
-    def create_path(self, links:dict):
+    def create_path(self):
         '''
         Create the path of nodes that will be seen on a specific IMR ring.
         '''
@@ -107,16 +107,20 @@ class Routerless_NoC:
     
     def send_packet(self, src, dest, verbose=False):
         '''
-        Send the packet around the IMR ring to dest.
+        Send the packet around the IMR ring to dest. Will inject onto path with
+        smallest route time to destination.
         '''
-        # FIXME: Add something here to make it route to one with lower difference.
         cur_path = None
         cur_idx = None
+        best_dist = 1000000000
         for path in self.imr_paths:
             if src in path and dest in path:
-                cur_path = path
-                cur_path_idx = self.imr_paths.index(path)
-                break
+                tmp_dist = (path.index(dest) - path.index(src)) % len(path)
+                if tmp_dist < best_dist:
+                    cur_path = path
+                    cur_path_idx = self.imr_paths.index(path)
+                    best_dist = tmp_dist
+                #break
 
         # Error handling stuff
         if cur_path == None:
@@ -134,7 +138,7 @@ class Routerless_NoC:
             self.imrs[cur_path_idx].used += 1
             cur_idx = (cur_idx + 1) % len(cur_path)
         if verbose:
-            print(f"Packet received at {cur_path[cur_idx]}!")
+            print(f"Packet received at {cur_path[cur_idx]}!\n")
 
     def get_hop_count(self):
         '''
@@ -161,9 +165,18 @@ class Routerless_NoC:
                 print(tmp_board[i*self.size:self.size+i*self.size])
 
     def is_terminal(self):
-        if [None] in self.board:
+        '''
+        Can each neuron speak to the node that it wants to?
+        Key is src and its list in dict is the destinations.
+
+        '''
+        try:
+            for key in self.n_con:
+                for node in self.n_con[key]:
+                    self.send_packet(key, node, False)
+            return True
+        except:
             return False
-        return True
 
     def run_sim(self, verbose=False):
         '''
@@ -174,19 +187,23 @@ class Routerless_NoC:
                 self.send_packet(key, node, verbose)
 
         return self.get_hop_count()
-    
 
-test = Routerless_NoC(4, {0:0})
-test.wire_imr([0,3,4,7],0)
-test.wire_imr([6,7,10,11],1)
-print(test.create_path({0:0}))
-test.send_packet(6,11,True)
-test.send_packet(10,6,True)
-test.print_noc()
-test.print_imr()
-print(test.get_hop_count())
-# noc2.place_node(0,'A')
-# noc3 = noc2.copy()
-# noc3.place_node(1,'B')
-# noc2.print_noc()
-# noc3.print_noc()
+def test_me():
+    test = Routerless_NoC(4, {0:[1,2,4],1:[0,2,5,6],2:[1,3,6,7],3:[2,7],4:[0,1],5:[1,4],6:[7,10]})
+    test.wire_imr([0,3,4,7],0)
+    print(test.is_terminal())
+    test.wire_imr([6,7,10,11],1)
+    print(test.create_path())
+    # test.send_packet(6,11,True)
+    # test.send_packet(10,6,True)
+    # test.print_noc()
+    # test.print_imr()
+    # print(test.get_hop_count())
+    # print(test.run_sim(verbose=True))
+    print(test.is_terminal())
+    #test.send_packet(6,7,True)
+    # noc2.place_node(0,'A')
+    # noc3 = noc2.copy()
+    # noc3.place_node(1,'B')
+    # noc2.print_noc()
+    # noc3.print_noc()
