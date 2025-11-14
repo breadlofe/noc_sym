@@ -46,7 +46,7 @@ class Routerless_NoC:
         self.imr_paths = []
         self.imr_codified = []
 
-        return np.array([0.0,0.0,0.0,0.0,0.0],np.float64)
+        return np.array([0.0,1.0,4.0,5.0,0.0],np.float64)
 
     def wire_imr(self, dim:list):
         '''
