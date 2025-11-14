@@ -19,12 +19,14 @@ if __name__ == '__main__':
 
     for i in range(n_games):
         observation = env.reset()[0]
+        print(observation)
         done = False
         score = 0
         #print(observation)
         while not done:
             action = agent.choose_action(observation)
             observation_, reward, done, trunc, info = env.step(action)
+            print(observation_.shape)
             score += reward
             if not load_checkpoint:
                 agent.learn(observation, reward, observation_, done)

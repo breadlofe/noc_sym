@@ -39,8 +39,16 @@ class Routerless_NoC:
         self.n_con = n_con #neuron connection that guide what node connects to what in NoC (what packets are sent where)
         self.imrs = []
         self.imr_paths = [] #this is the state
+        self.imr_codified = []
 
-    def wire_imr(self, dim:list, dir:int):
+    def reset(self):
+        self.imrs = []
+        self.imr_paths = []
+        self.imr_codified = []
+
+        return np.array([0.0,0.0,0.0,0.0,0.0],np.float64)
+
+    def wire_imr(self, dim:list):
         '''
         Setup the IMR Ring for the NoC.
         '''
@@ -53,16 +61,83 @@ class Routerless_NoC:
             raise ValueError("Dimensions given to not line up row-wise. Must be rect.")
         if not in_column(dim[0], dim[2], self.size) or not in_column(dim[1], dim[3], self.size):
             raise ValueError("Dimensions given to not line up column-wise. Must be rect.")
-        dir = dir % 2
+        dir = dim[-1] % 2
         # ======================
         
-        new_imr = IMR(len(self.imrs), dim, dir, 0)
+        new_imr = IMR(len(self.imrs), dim[:4], dir, 0)
         # new_imr.dim = dim
         # new_imr.dir = dir
         # new_imr.used = 0
         # new_imr.tag = len(self.imrs)
         self.imrs.append(new_imr)
+
+        # observation_, reward, done, trunc, info
+        return self.imr_paths.copy(), self.reward(), self.is_terminal(), 0, 0
     
+    def connect_and_wire_imr(self, dim:list):
+        '''
+        Setup the IMR Ring for the NoC.
+        '''
+        # dataclass with tag, dimensions of wire, direction, and packets traveled.
+        # [x1,x2,y1,y2]
+        # CW (0) or CCW (1)
+
+        # === ERROR HANDLING ===
+        if dim[0] >= dim[1] or dim[2] >= dim[3]:
+            raise ValueError("Dimensions given to not line up row-wise. Must be rect.")
+        if not in_column(dim[0], dim[2], self.size) or not in_column(dim[1], dim[3], self.size):
+            raise ValueError("Dimensions given to not line up column-wise. Must be rect.")
+        dir = dim[-1] % 2
+        # ======================
+        
+        new_imr = IMR(len(self.imrs), dim[:4], dir, 0)
+        # new_imr.dim = dim
+        # new_imr.dir = dir
+        # new_imr.used = 0
+        # new_imr.tag = len(self.imrs)
+        self.imrs.append(new_imr)
+
+        # CONNECT THE PATH
+        cur_path = []
+        # For clockwise
+        if new_imr.dir == 0:
+            # for i in range from x1 to x2, add those nodes to thing 
+            for i in range(new_imr.dim[0], new_imr.dim[1]):
+                cur_path.append(self.board[i]) 
+            # for i in range from x2 to y2 add those nodes to thing
+            for i in range(new_imr.dim[1], new_imr.dim[3], self.size):
+                cur_path.append(self.board[i]) 
+            # for i in range from y2 to y1 add those nodes to thing
+            for i in range(new_imr.dim[3], new_imr.dim[2], -1):
+                cur_path.append(self.board[i]) 
+            # for i in range from y1 to x1 add those nodes to thing
+            for i in range(new_imr.dim[2], new_imr.dim[0], -self.size):
+                cur_path.append(self.board[i]) 
+        # For counter-clockwise
+        else:
+            # for i in range from x1 to y1, add those nodes to thing 
+            for i in range(new_imr.dim[0], new_imr.dim[2], self.size):
+                cur_path.append(self.board[i]) 
+            # for i in range from y1 to y2 add those nodes to thing
+            for i in range(new_imr.dim[2], new_imr.dim[3]):
+                cur_path.append(self.board[i]) 
+            # for i in range from y2 to x2 add those nodes to thing
+            for i in range(new_imr.dim[3], new_imr.dim[1], -self.size):
+                cur_path.append(self.board[i]) 
+            # for i in range from x2 to x1 add those nodes to thing
+            for i in range(new_imr.dim[1], new_imr.dim[0], -1):
+                cur_path.append(self.board[i]) 
+
+        self.imr_paths.append(cur_path)
+        self.imr_codified = np.array(dim,dtype=np.float64)
+        # observation_, reward, done, trunc, info
+        return np.array(self.imr_codified.copy(),dtype=np.float64), self.reward(), self.is_terminal(), 0, 0
+    
+    def reward(self):
+        if not self.is_terminal:
+            return -10
+        else:
+            return -(self.get_hop_count()/100)
 
     def create_path(self):
         '''
@@ -190,16 +265,16 @@ class Routerless_NoC:
 
 def test_me():
     test = Routerless_NoC(4, {0:[1,2,4],1:[0,2,5,6],2:[1,3,6,7],3:[2,7],4:[0,1],5:[1,4],6:[7,10]})
-    test.wire_imr([0,3,4,7],0)
+    test.wire_imr([0,3,4,7,0])
     print(test.is_terminal())
-    test.wire_imr([6,7,10,11],1)
+    test.wire_imr([6,7,10,11,1])
     print(test.create_path())
     # test.send_packet(6,11,True)
     # test.send_packet(10,6,True)
     # test.print_noc()
     # test.print_imr()
     # print(test.get_hop_count())
-    # print(test.run_sim(verbose=True))
+    print(test.run_sim(verbose=True))
     print(test.is_terminal())
     #test.send_packet(6,7,True)
     # noc2.place_node(0,'A')
