@@ -55,7 +55,7 @@ if __name__ == '__main__':
             action = agent.choose_action(observation)
             # if action == 0:
             #     print("HGKNOSGJSEDGJIOSJIOG")
-            observation_, reward, done, trunc, info = env.connect_and_wire_imr(possible_actions[action-1]) #This should set up a wire with given action
+            observation_, reward, done, trunc, info = env.connect_and_wire_imr(possible_actions[action]) #This should set up a wire with given action
             score += reward
             if not load_checkpoint:
                 agent.learn(observation, reward, observation_, done)
