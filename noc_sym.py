@@ -131,6 +131,13 @@ class NoC:
                 hc_array.append( self.get_hop_count_single(src, dest) )
         return float( np.average( np.array(hc_array) ) )
     
+    def get_hop_count_total(self):
+        hc_array = []
+        for src in self.dests:
+            for dest in self.dests[src]:
+                hc_array.append( self.get_hop_count_single(src, dest) )
+        return float( np.sum( np.array(hc_array) ) )
+    
     def print_noc(self):
         for i in range( self.size ):
             print(self.board[i*self.size:self.size+i*self.size])
