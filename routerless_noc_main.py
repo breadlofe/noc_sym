@@ -33,7 +33,7 @@ if __name__ == '__main__':
                                  10:[6,9,11,14],11:[7,10,15],12:[8,9,13],13:[9,12,14],14:[10,13,15],15:[10,11,14]})
     possible_actions = get_all_actions(size)
     agent = Agent( alpha=1e-5, n_actions=len(possible_actions))
-    n_games = 100
+    n_games = 200
 
     #filename = 'routerless.png'
     best_score = -np.inf

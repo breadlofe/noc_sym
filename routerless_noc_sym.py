@@ -135,9 +135,9 @@ class Routerless_NoC:
     
     def reward(self):
         if not self.is_terminal:
-            return -10
+            return 0
         else:
-            return -(self.get_hop_count()/100)
+            return max(1000-self.get_hop_count(),0)
 
     def create_path(self):
         '''
