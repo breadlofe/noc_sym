@@ -33,7 +33,7 @@ if __name__ == '__main__':
                                  10:[6,9,11,14],11:[7,10,15],12:[8,9,13],13:[9,12,14],14:[10,13,15],15:[10,11,14]})
     possible_actions = get_all_actions(size)
     agent = Agent( alpha=1e-5, n_actions=len(possible_actions))
-    n_games = 200
+    n_games = 300
 
     #filename = 'routerless.png'
     best_score = -np.inf
@@ -53,7 +53,9 @@ if __name__ == '__main__':
         #print(observation)
         while not done:
             action = agent.choose_action(observation)
-            observation_, reward, done, trunc, info = env.connect_and_wire_imr(possible_actions[action]) #This should set up a wire with given action
+            # if action == 0:
+            #     print("HGKNOSGJSEDGJIOSJIOG")
+            observation_, reward, done, trunc, info = env.connect_and_wire_imr(possible_actions[action-1]) #This should set up a wire with given action
             score += reward
             if not load_checkpoint:
                 agent.learn(observation, reward, observation_, done)
@@ -61,8 +63,8 @@ if __name__ == '__main__':
         score_history.append(score)
         avg_score = np.mean(score_history[-100:])
 
-        if avg_score > best_score:
-            best_score = avg_score
+        if score > best_score:
+            best_score = score
             best_env = env
             if not load_checkpoint:
                 agent.save_models
@@ -70,6 +72,7 @@ if __name__ == '__main__':
         print('episode ', i, 'score %.1f' % score, 'avg_score %.1f' % avg_score)
 
     print(env.is_terminal())
+    env.run_sim()
     print(env.get_hop_count())
     print(env.imrs)
     env.print_imr()

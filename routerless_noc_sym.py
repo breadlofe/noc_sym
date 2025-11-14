@@ -134,9 +134,10 @@ class Routerless_NoC:
         return np.array(self.imr_codified.copy(),dtype=np.float64), self.reward(), self.is_terminal(), 0, 0
     
     def reward(self):
-        if not self.is_terminal:
+        if not self.is_terminal():
             return 0
         else:
+            self.run_sim()
             return max(1000-self.get_hop_count(),0)
 
     def create_path(self):
@@ -249,7 +250,10 @@ class Routerless_NoC:
             for key in self.n_con:
                 for node in self.n_con[key]:
                     self.send_packet(key, node, False)
+            for imr in self.imrs:
+                imr.used = 0
             return True
+
         except:
             return False
 
